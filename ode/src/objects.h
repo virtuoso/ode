@@ -180,7 +180,7 @@ private:
         dIASSERT(extraIterationCountFactor >= 0);
 
         dReal extraIterationCount = iterationCount * extraIterationCountFactor;
-        return extraIterationCount < UINT_MAX ? (unsigned)extraIterationCount : UINT_MAX;
+        return (unsigned)extraIterationCount < UINT_MAX ? (unsigned)extraIterationCount : UINT_MAX;
     }
 
     void UpdateDynamicIterationCountAdjustmentEnabledState()

@@ -8,6 +8,14 @@ the rules for this file:
   * keep the format consistent (79 char width, M/D/Y date format).
 
 ------------------------------------------------------------------------------
+03/26/2024 Oleh Derevenko
+        * Autotools build scripts, when configured with "--enable-libccd",
+          will now assign all the relevant colliders to the libccd. 
+          Before, it used to keep default collider for Box-Cylinder pair and 
+          that was inconsistent with other configuration methods (CMake and 
+          premake4.exe). To obtain the old behavior configure as 
+          "--enable-libccd --with-box-cylinder=default".
+
 06/28/2023 Oleh Derevenko
         * dJointAddPUTorques() was added to replace orphaned declaration of 
           dJointAddPUTorque()

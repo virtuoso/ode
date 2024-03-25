@@ -425,11 +425,12 @@ col_convex_convex=default
 use_libccd=no
 libccd_all=no
 AC_ARG_ENABLE(libccd, AS_HELP_STRING([--enable-libccd],
-            [enable all libccd colliders (except box-cylinder)]),
+            [enable all libccd colliders]),
             libccd_all=$enableval)
 if test x$libccd_all = xyes
 then
     col_cylinder_cylinder=libccd
+    col_box_cylinder=libccd
     col_capsule_cylinder=libccd
     col_convex_box=libccd
     col_convex_capsule=libccd

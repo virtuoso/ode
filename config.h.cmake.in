@@ -73,6 +73,8 @@
 #define ODE_PLATFORM_OSX
 #elif defined(__FreeBSD__)
 #define ODE_PLATFORM_FREEBSD
+#elif defined(__EMSCRIPTEN__)
+#define ODE_PLATFORM_EMSCRIPTEN
 #else
 #error "Need some help identifying the platform!"
 #endif

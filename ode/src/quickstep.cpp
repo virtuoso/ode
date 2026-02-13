@@ -2654,7 +2654,7 @@ bool dxQuickStepIsland_Stage4LCP_ConstraintsShuffling(dxQuickStepperStage4CallCo
                 ConstraintsReorderingHelper()(stage4CallContext, 0, localContext->m_m);
             }
         }
-        dIASSERT((RRS__MAX, true)); // A reference to RRS__MAX to be located by Find in Files
+        dIASSERT(((void)RRS__MAX, true)); // A reference to RRS__MAX to be located by Find in Files
     }
     else {
         // Just return true and skip the randomization for the very first iteration

@@ -1156,7 +1156,7 @@ void dxWorldProcessMemArena::FreeMemArena (dxWorldProcessMemArena *arena)
 sizeint dxWorldProcessMemArena::AdjustArenaSizeForReserveRequirements(sizeint arenareq, float rsrvfactor, unsigned rsrvminimum)
 {
     float scaledarena = arenareq * rsrvfactor;
-    sizeint adjustedarena = (scaledarena < SIZE_MAX) ? (sizeint)scaledarena : SIZE_MAX;
+    sizeint adjustedarena = (scaledarena < (float)SIZE_MAX) ? (sizeint)scaledarena : SIZE_MAX;
     sizeint boundedarena = (adjustedarena > rsrvminimum) ? adjustedarena : (sizeint)rsrvminimum;
     return dEFFICIENT_SIZE(boundedarena);
 }

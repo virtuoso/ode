@@ -735,7 +735,7 @@ static _OU_ALWAYSINLINE void _OU_CONVENTION_API
 END_NAMESPACE_OU();
 
 
-#include <libkern/OSAtomic.h>
+#include <atomic>
 
 
 BEGIN_NAMESPACE_OU();
@@ -745,60 +745,37 @@ typedef uint32_t atomicord32;
 typedef void *atomicptr;
 
 
-#define __ou_intlck_target_t volatile int32_t *
-#define __ou_xchgadd_target_t volatile int32_t *
-#define __ou_cmpxchg_value_t int32_t
-#define __ou_cmpxchg_target_t volatile int32_t *
-#define __ou_bitmsk_target_t volatile uint32_t *
-
-
 #define __OU_ATOMIC_ORD32_FUNCTIONS_DEFINED
 
 static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
 /*atomicord32 */AtomicIncrement(volatile atomicord32 *paoDestination)
 {
-	return OSAtomicIncrement32Barrier((__ou_intlck_target_t)paoDestination);
+	return std::atomic_fetch_add((volatile std::atomic<atomicord32>*)paoDestination, (atomicord32)1) + 1;
 }
 
 static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
 /*atomicord32 */AtomicDecrement(volatile atomicord32 *paoDestination)
 {
-	return OSAtomicDecrement32Barrier((__ou_intlck_target_t)paoDestination);
+	return std::atomic_fetch_sub((volatile std::atomic<atomicord32>*)paoDestination, (atomicord32)1) - 1;
 }
 
 
 static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
 /*atomicord32 */AtomicExchange(volatile atomicord32 *paoDestination, atomicord32 aoExchange)
 {
-	__ou_cmpxchg_value_t aoOldValue = *paoDestination;
-
-	/*
-	 *	Implementation Note:
-	 *	It is safe to use compare-and-swap without memory barrier for subsequent attempts
-	 *	because current thread had already had a barrier and does not have any additional
-	 *	memory access until function exit. On the other hand it is expected that other 
-	 *	threads will be using this API set for manipulations with paoDestination as well
-	 *	and hence will not issue writes after/without memory barrier.
-	 */
-	for (bool bSwapExecuted = OSAtomicCompareAndSwap32Barrier(aoOldValue, aoExchange, (__ou_cmpxchg_target_t)paoDestination);
-		!bSwapExecuted; bSwapExecuted = OSAtomicCompareAndSwap32(aoOldValue, aoExchange, (__ou_cmpxchg_target_t)paoDestination))
-	{
-		aoOldValue = *paoDestination;
-	}
-	
-	return aoOldValue;
+	return std::atomic_exchange((volatile std::atomic<atomicord32>*)paoDestination, aoExchange);
 }
 
 static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
 /*atomicord32 */AtomicExchangeAdd(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
-	return (OSAtomicAdd32Barrier(aoAddend, (__ou_xchgadd_target_t)paoDestination) - aoAddend);
+	return std::atomic_fetch_add((volatile std::atomic<atomicord32>*)paoDestination, aoAddend);
 }
 
 static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
 /*bool */AtomicCompareExchange(volatile atomicord32 *paoDestination, atomicord32 aoComparand, atomicord32 aoExchange)
 {
-	return OSAtomicCompareAndSwap32Barrier(aoComparand, aoExchange, (__ou_cmpxchg_target_t)paoDestination);
+	return std::atomic_compare_exchange_strong((volatile std::atomic<atomicord32>*)paoDestination, &aoComparand, aoExchange);
 }
 
 
@@ -809,19 +786,19 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
 /*atomicord32 */AtomicAnd(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	return OSAtomicAnd32OrigBarrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
+	return std::atomic_fetch_and((volatile std::atomic<atomicord32>*)paoDestination, aoBitMask);
 }
 
 static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
 /*atomicord32 */AtomicOr(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	return OSAtomicOr32OrigBarrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
+	return std::atomic_fetch_or((volatile std::atomic<atomicord32>*)paoDestination, aoBitMask);
 }
 
 static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
 /*atomicord32 */AtomicXor(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	return OSAtomicXor32OrigBarrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
+	return std::atomic_fetch_xor((volatile std::atomic<atomicord32>*)paoDestination, aoBitMask);
 }
 
 
@@ -832,51 +809,19 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
 /*atomicord32 */AtomicAnd(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	atomicord32 aoOldValue = *paoDestination;
-
-	/*
-	 *	Implementation Note:
-	 *	It is safe to use compare-and-swap without memory barrier for subsequent attempts
-	 *	because current thread had already had a barrier and does not have any additional
-	 *	memory access until function exit. On the other hand it is expected that other 
-	 *	threads will be using this API set for manipulations with paoDestination as well
-	 *	and hence will not issue writes after/without memory barrier.
-	 */
-	for (bool bSwapExecuted = OSAtomicCompareAndSwap32Barrier(aoOldValue, (aoOldValue & aoBitMask), paoDestination);
-		!bSwapExecuted; bSwapExecuted = OSAtomicCompareAndSwap32(aoOldValue, (aoOldValue & aoBitMask), paoDestination))
-	{
-		aoOldValue = *paoDestination;
-	}
-	
-	return aoOldValue;
+	return std::atomic_fetch_and((volatile std::atomic<atomicord32>*)paoDestination, aoBitMask);
 }
 
 static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
 /*atomicord32 */AtomicOr(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	atomicord32 aoOldValue = *paoDestination;
-
-	/*
-	 *	Implementation Note:
-	 *	It is safe to use compare-and-swap without memory barrier for subsequent attempts
-	 *	because current thread had already had a barrier and does not have any additional
-	 *	memory access until function exit. On the other hand it is expected that other 
-	 *	threads will be using this API set for manipulations with paoDestination as well
-	 *	and hence will not issue writes after/without memory barrier.
-	 */
-	for (bool bSwapExecuted = OSAtomicCompareAndSwap32Barrier(aoOldValue, (aoOldValue | aoBitMask), paoDestination);
-		!bSwapExecuted; bSwapExecuted = OSAtomicCompareAndSwap32(aoOldValue, (aoOldValue | aoBitMask), paoDestination))
-	{
-		aoOldValue = *paoDestination;
-	}
-	
-	return aoOldValue;
+	return std::atomic_fetch_or((volatile std::atomic<atomicord32>*)paoDestination, aoBitMask);
 }
 
 static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API 
 /*atomicord32 */AtomicXor(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	return (OSAtomicXor32Barrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination) ^ aoBitMask);
+	return std::atomic_fetch_xor((volatile std::atomic<atomicord32>*)paoDestination, aoBitMask);
 }
 
 
@@ -890,29 +835,13 @@ static _OU_ALWAYSINLINE atomicord32 _OU_CONVENTION_API
 static _OU_ALWAYSINLINE atomicptr _OU_CONVENTION_API 
 /*atomicptr */AtomicExchangePointer(volatile atomicptr *papDestination, atomicptr apExchange)
 {
-	atomicptr apOldValue = *papDestination;
-
-	/*
-	 *	Implementation Note:
-	 *	It is safe to use compare-and-swap without memory barrier for subsequent attempts
-	 *	because current thread had already had a barrier and does not have any additional
-	 *	memory access until function exit. On the other hand it is expected that other 
-	 *	threads will be using this API set for manipulations with papDestination as well
-	 *	and hence will not issue writes after/without memory barrier.
-	 */
-	for (bool bSwapExecuted = OSAtomicCompareAndSwapPtrBarrier(apOldValue, apExchange, papDestination);
-		!bSwapExecuted; bSwapExecuted = OSAtomicCompareAndSwapPtr(apOldValue, apExchange, papDestination))
-	{
-		apOldValue = *papDestination;
-	}
-	
-	return apOldValue;
+	return std::atomic_exchange((volatile std::atomic<atomicptr>*)papDestination, apExchange);
 }
 
 static _OU_ALWAYSINLINE bool _OU_CONVENTION_API 
 /*bool */AtomicCompareExchangePointer(volatile atomicptr *papDestination, atomicptr apComparand, atomicptr apExchange)
 {
-	return OSAtomicCompareAndSwapPtrBarrier(apComparand, apExchange, papDestination);
+	return std::atomic_compare_exchange_strong((volatile std::atomic<atomicptr>*)papDestination, &apComparand, apExchange);
 }
 
 
@@ -924,37 +853,37 @@ static _OU_ALWAYSINLINE bool _OU_CONVENTION_API
 static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
 /*void */AtomicIncrementNoResult(volatile atomicord32 *paoDestination)
 {
-	OSAtomicIncrement32Barrier((__ou_intlck_target_t)paoDestination);
+	std::atomic_fetch_add((volatile std::atomic<atomicord32>*)paoDestination, (atomicord32)1);
 }
 
 static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
 /*void */AtomicDecrementNoResult(volatile atomicord32 *paoDestination)
 {
-	OSAtomicDecrement32Barrier((__ou_intlck_target_t)paoDestination);
+	std::atomic_fetch_sub((volatile std::atomic<atomicord32>*)paoDestination, (atomicord32)1);
 }
 
 static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
 /*void */AtomicExchangeAddNoResult(volatile atomicord32 *paoDestination, atomicord32 aoAddend)
 {
-	OSAtomicAdd32Barrier(aoAddend, (__ou_xchgadd_target_t)paoDestination);
+	std::atomic_fetch_add((volatile std::atomic<atomicord32>*)paoDestination, aoAddend);
 }
 
 static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
 /*void */AtomicAndNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	OSAtomicAnd32Barrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
+	std::atomic_fetch_and((volatile std::atomic<atomicord32>*)paoDestination, aoBitMask);
 }
 
 static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
 /*void */AtomicOrNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	OSAtomicOr32Barrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
+	std::atomic_fetch_or((volatile std::atomic<atomicord32>*)paoDestination, aoBitMask);
 }
 
 static _OU_ALWAYSINLINE void _OU_CONVENTION_API 
 /*void */AtomicXorNoResult(volatile atomicord32 *paoDestination, atomicord32 aoBitMask)
 {
-	OSAtomicXor32Barrier(aoBitMask, (__ou_bitmsk_target_t)paoDestination);
+	std::atomic_fetch_xor((volatile std::atomic<atomicord32>*)paoDestination, aoBitMask);
 }
 
 
